@@ -179,57 +179,6 @@
       padding-left: 20px;
     }
 
-    .test-box {
-      margin-top: 22px;
-      padding: 20px;
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      background: #fafafa;
-    }
-
-    .button-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      margin-top: 14px;
-    }
-
-    .action-button {
-      appearance: none;
-      border: none;
-      border-radius: 12px;
-      padding: 12px 18px;
-      font-size: 0.98rem;
-      font-weight: 600;
-      cursor: pointer;
-      background: var(--accent);
-      color: #ffffff;
-      transition: background 0.2s ease, transform 0.05s ease;
-    }
-
-    .action-button:hover {
-      background: var(--accent-hover);
-    }
-
-    .action-button:active {
-      transform: translateY(1px);
-    }
-
-    .action-button:disabled {
-      opacity: 0.7;
-      cursor: wait;
-    }
-
-    .status {
-      margin-top: 14px;
-      padding: 12px 14px;
-      border-radius: 12px;
-      background: #ffffff;
-      border: 1px solid var(--border);
-      color: var(--muted);
-      min-height: 48px;
-    }
-
     esp-web-install-button {
       --esp-tools-button-color: #e3000b;
       --esp-tools-button-text-color: #ffffff;
@@ -280,7 +229,6 @@
             <li>The new port that appears is usually your device. Typical names may include <code>USB Serial</code>, <code>CP210x</code>, <code>CH340</code>, or <code>ttyUSB</code>/<code>ttyACM</code>.</li>
             <li>Select the newly appeared port, click "Connect" in the dialog, and confirm the installation.</li>
             <li>Wait for flashing to complete. Keep the USB cable connected during the process. The device may reboot automatically when installation is finished.</li>
-            <li>If desired, you can test your device with the device tester at the bottom of this page.</li>
           </ul>
         </div>
 
@@ -290,24 +238,6 @@
 
         <div class="warning">
           <strong>Warning:</strong> Make sure no other ESP32 or related devices are connected because if you select the wrong port, you may accidentally flash those. This usually cannot be undone, so be careful.
-        </div>
-
-        <div class="test-box">
-          <h2>Testing your device</h2>
-          <p class="muted">
-            After flashing is complete, you can test whether the device responds correctly by sending the command <code>&gt;SPEAKER.BEEP()</code> over Web Serial.
-          </p>
-          <p class="muted">
-            Click "Test Beep", select your device in the port picker, click "Connect", and the page will send the command and close the port automatically. If everything is working correctly, you should hear a beep.
-          </p>
-
-          <div class="button-row">
-            <button id="test-beep" class="action-button" type="button">Test Beep</button>
-          </div>
-
-          <div id="status" class="status">
-            No test has been run yet.
-          </div>
         </div>
 
 
@@ -327,7 +257,6 @@
           <li>No port visible: reconnect the device and try a different cable.</li>
           <li>Wrong port selected: unplug the M5Stack and see which port disappears.</li>
           <li>Flashing fails: close other applications using the port and try again.</li>
-          <li>No beep during test: run the test again and make sure you selected the correct port.</li>
         </ul>
         <div class="footer">
   Flashing powered by <a href="https://github.com/esphome/esp-web-tools" target="_blank">ESP Web Tools</a> (MIT License)
@@ -336,81 +265,5 @@
     </div>
 
   </div>
-
-  <script>
-    const testButton = document.getElementById("test-beep");
-    const statusEl = document.getElementById("status");
-
-    function setStatus(message) {
-      statusEl.textContent = message;
-    }
-
-    async function testBeep() {
-      if (!("serial" in navigator)) {
-        setStatus("Web Serial is not supported in this browser.");
-        alert("Web Serial is not supported in this browser.");
-        return;
-      }
-
-      let port = null;
-      let writer = null;
-      let encoder = null;
-      let pipePromise = null;
-
-      testButton.disabled = true;
-      setStatus("Select your device in the port picker to run the beep test.");
-
-      try {
-        port = await navigator.serial.requestPort();
-
-        await port.open({
-          baudRate: 115200,
-          dataBits: 8,
-          stopBits: 1,
-          parity: "none",
-          flowControl: "none",
-        });
-
-        encoder = new TextEncoderStream();
-        pipePromise = encoder.readable.pipeTo(port.writable);
-        writer = encoder.writable.getWriter();
-
-        await writer.write(">SPEAKER.BEEP()");
-
-        await writer.close();
-        writer = null;
-
-        await pipePromise;
-
-        await port.close();
-        port = null;
-
-        setStatus("Test command sent and port closed. If everything is working, the device should have beeped.");
-      } catch (error) {
-        if (error && error.name === "NotFoundError") {
-          setStatus("No port was selected.");
-        } else {
-          console.error(error);
-          setStatus("The beep test failed. Please try again.");
-        }
-
-        try {
-          if (writer) {
-            await writer.close();
-          }
-        } catch (_) {}
-
-        try {
-          if (port) {
-            await port.close();
-          }
-        } catch (_) {}
-      } finally {
-        testButton.disabled = false;
-      }
-    }
-
-    testButton.addEventListener("click", testBeep);
-  </script>
 </body>
 </html>

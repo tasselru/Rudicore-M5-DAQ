@@ -15,6 +15,7 @@ libdeps/
 *.elf
 *.bin
 !Rudicore-M5.bin
+!Rudicore-M5-DAQ.bin
 *.hex
 *.map
 *.out

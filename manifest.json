@@ -1,13 +1,13 @@
  
 {
-  "name": "Rudicore-M5 firmware",
+  "name": "Rudicore-M5-DAQ firmware",
   "version": "0.0.1",
   "new_install_prompt_erase": true,
   "builds": [
     {
       "chipFamily": "ESP32",
       "parts": [
-        { "path": "./bin/Rudicore-M5.bin", "offset": 0 }
+        { "path": "./bin/Rudicore-M5-DAQ.bin", "offset": 0 }
       ]
     }
   ]

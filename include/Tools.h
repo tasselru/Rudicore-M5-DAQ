@@ -21,15 +21,51 @@ void print2serial(String data)
 {
   LastResult = data;
   note_data_transfer();
+#if RUDICORE_ENABLE_BLUETOOTH
   if (BT_Active) BT.println(data);
   else Serial.println(data);
+#else
+  Serial.println(data);
+#endif
 }
 
 void write2serial(uint8_t data)
 {
   note_data_transfer();
+#if RUDICORE_ENABLE_BLUETOOTH
   if (BT_Active) BT.write(data);
   else Serial.write(data);
+#else
+  Serial.write(data);
+#endif
+}
+
+void write2serial(const uint8_t *data, size_t length)
+{
+  note_data_transfer();
+#if RUDICORE_ENABLE_BLUETOOTH
+  if (BT_Active) BT.write(data, length);
+  else Serial.write(data, length);
+#else
+  Serial.write(data, length);
+#endif
+}
+
+bool input_available()
+{
+#if RUDICORE_ENABLE_BLUETOOTH
+  return (Serial.available() || BT.available());
+#else
+  return Serial.available();
+#endif
+}
+
+size_t read_active_input_bytes(uint8_t *buffer, size_t length)
+{
+#if RUDICORE_ENABLE_BLUETOOTH
+  if (BT_Active) return BT.readBytes(buffer, length);
+#endif
+  return Serial.readBytes(buffer, length);
 }
 
 // Busy-wait until delay has expired
@@ -123,7 +159,7 @@ void read_user_input()
 
   char c=' ';
   
-  while ((Serial.available()) || (BT.available()))
+  while (input_available())
   {
     show_time = millis() + DisplayRefreshInterval;
     if (Serial.available())
@@ -132,12 +168,14 @@ void read_user_input()
       BT_Active = false;
       note_data_transfer();
     }
+#if RUDICORE_ENABLE_BLUETOOTH
     if (BT.available())
     {
       c = BT.read();
       BT_Active = true;
       note_data_transfer();
     }
+#endif
     
     if (c == '>')
     {
@@ -164,7 +202,9 @@ void read_user_input()
 void FlushInput()
 {
   Serial.flush();  
+#if RUDICORE_ENABLE_BLUETOOTH
   BT.flush();
+#endif
 }
 
 // Construct Bluetooth device name and set globals
@@ -200,7 +240,11 @@ static const size_t NumFriendlyNames = sizeof(FriendlyNameList) / sizeof(Friendl
 String FriendlyNameConstruct()
 {
   uint8_t baseMac[6];
+#if RUDICORE_ENABLE_BLUETOOTH
   esp_read_mac(baseMac, ESP_MAC_BT);
+#else
+  esp_read_mac(baseMac, ESP_MAC_WIFI_STA);
+#endif
 
   uint8_t last_mac_byte = baseMac[5];
   int name_index = (last_mac_byte + FriendlyNameOffset) % NumFriendlyNames;

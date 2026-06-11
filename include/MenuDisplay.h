@@ -83,7 +83,7 @@ void IMUDemo()
   long int prevtime = millis();
   do
   {
-    if ((Serial.available()) || (BT.available())) return;
+    if (input_available()) return;
     x = x_start+ ColDist + 40;
     y = y_start;
 
@@ -137,7 +137,7 @@ void IMUDemo()
       delay(1000);
       do
       {
-        if ((Serial.available()) || (BT.available())) return;
+        if (input_available()) return;
         delay(100);
       } while (!M5.BtnC.read());
     } 
@@ -457,7 +457,7 @@ void show_status()
   ez.canvas.println("");
   ez.canvas.println("Firmware: " + String(Firmware_Version));
 
-  ez.canvas.println("Baudrate: " + String(baudrate));
+  ez.canvas.println("ESP32ADC buffer: " + String(data_buf_size) + " samples");
   ez.canvas.println("BT Name: " + BT_Name);
   ez.canvas.println("Friendly name: " + Friendly_Name);
   ez.canvas.println("Device type: " + DeviceTypeLoad());
@@ -575,7 +575,7 @@ void menu_show_GPIO()
   bool firsttime = true;
   while (true) 
   {
-    if ((Serial.available()) || (BT.available())) return;
+    if (input_available()) return;
     M5.Lcd.setTextDatum(BL_DATUM);
     x = temp;
     y = y_start_tab + RowDist;
@@ -702,14 +702,18 @@ bool menu_service_friendlyname(ezMenu *callingMenu = nullptr)
   ez.screen.clear();
   ez.header.show("Friendly name...");
   uint8_t baseMac[6];
+#if RUDICORE_ENABLE_BLUETOOTH
   esp_read_mac(baseMac, ESP_MAC_BT);
+#else
+  esp_read_mac(baseMac, ESP_MAC_WIFI_STA);
+#endif
   int index = (baseMac[5] + FriendlyNameOffset) % NumFriendlyNames;
   refresh_name(index);
 
   while (true)
   {
     ez.buttons.show("Prev # Save # Next");
-    if ((Serial.available()) || (BT.available())) return false;
+    if (input_available()) return false;
     button = ez.buttons.poll();
 
     if (button == "Next") {
@@ -769,7 +773,7 @@ bool menu_service_devicetype(ezMenu *callingMenu)
   while (true)
   {
     ez.buttons.show("Prev # Save # Next");
-    if ((Serial.available()) || (BT.available())) return false;
+    if (input_available()) return false;
     button = ez.buttons.poll();
 
     if (button == "Next") {
@@ -828,7 +832,7 @@ bool menu_service_i2cmask(ezMenu *callingMenu)
   while (true)
   {
     ez.buttons.show("Back # Toggle # Next");
-    if ((Serial.available()) || (BT.available())) return false;
+    if (input_available()) return false;
     button = ez.buttons.poll();
 
     if (button == "Back")
@@ -861,7 +865,7 @@ void menu_show_status()
 
   while (true) 
   {
-    if ((Serial.available()) || (BT.available())) return;
+    if (input_available()) return;
     button = ez.buttons.poll();
     if (button == "Back") 
     {

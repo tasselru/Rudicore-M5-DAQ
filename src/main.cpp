@@ -11,9 +11,15 @@
 
 #include <M5Stack.h>
 #include "Version.h"
+#include "esp_heap_caps.h"
 #include <Wire.h>
 #include <M5ez.h>
+#ifndef RUDICORE_ENABLE_BLUETOOTH
+#define RUDICORE_ENABLE_BLUETOOTH 1
+#endif
+#if RUDICORE_ENABLE_BLUETOOTH
 #include "BluetoothSerial.h"
+#endif
 #include "ST_HW_HC_SR04.h"
 #include "Adafruit_TCS34725.h"
 #include "SHT3X.h"
@@ -50,18 +56,30 @@
 #define MAROON_RGB565     M5.Lcd.color565(115, 14, 4)
 #define MAHOGANY_RGB565   M5.Lcd.color565(74, 0, 4)
 
+#if RUDICORE_ENABLE_BLUETOOTH
 BluetoothSerial BT;
+#endif
 bool BT_Active = false;
-String BT_Address;
-String BT_Name;
-String Friendly_Name;
+String BT_Address = "Disabled";
+String BT_Name = "Disabled";
+String Friendly_Name = "Rudicore-M5";
 int FriendlyNameOffset = 0;
 
 // Buffer for storing sensor data
-#define data_buf_size 20000
-uint16_t data_buf[data_buf_size];
+#ifndef ADC_DATA_BUF_SIZE
+#if RUDICORE_ENABLE_BLUETOOTH
+#define ADC_DATA_BUF_SIZE 20000
+#else
+#define ADC_DATA_BUF_SIZE 0
+#endif
+#endif
+#ifndef ADC_DATA_BUF_RESERVE_BYTES
+#define ADC_DATA_BUF_RESERVE_BYTES 32768
+#endif
+uint32_t data_buf_size = 0;
+uint16_t *data_buf = nullptr;
 uint16_t data_buf_pointer_read=0;
-uint16_t data_buf_pointer_write=0;
+uint32_t data_buf_pointer_write=0;
 
 #define baudrate 115200             // 
 #define M5STACKFIRE_SPEAKER_PIN 25
@@ -169,6 +187,37 @@ char UpperCase = 'U';
 #include "virtual_i2c/Speaker.h"
 #include "virtual_i2c/System.h"
 
+bool allocate_data_buffer()
+{
+  uint32_t requested_samples = ADC_DATA_BUF_SIZE;
+  if (requested_samples == 0)
+  {
+    size_t largest_block = heap_caps_get_largest_free_block(MALLOC_CAP_8BIT);
+    if (largest_block <= ADC_DATA_BUF_RESERVE_BYTES)
+    {
+      data_buf_size = 0;
+      return false;
+    }
+    requested_samples = (largest_block - ADC_DATA_BUF_RESERVE_BYTES) / sizeof(uint16_t);
+  }
+
+  while (requested_samples > 0)
+  {
+    data_buf = (uint16_t *)heap_caps_malloc(requested_samples * sizeof(uint16_t), MALLOC_CAP_8BIT);
+    if (data_buf != nullptr)
+    {
+      data_buf_size = requested_samples;
+      return true;
+    }
+
+    if (requested_samples <= 1024) break;
+    requested_samples -= 1024;
+  }
+
+  data_buf_size = 0;
+  return false;
+}
+
   void setup() 
   {
   M5.begin(true, false, false, true);
@@ -181,13 +230,20 @@ char UpperCase = 'U';
   M5.Power.setPowerBtnEn(true);
   M5.Power.setCharge(true);
 
+#if RUDICORE_ENABLE_BLUETOOTH
   const char *UniqueBTName = BTNameConstruct();
   BT.begin(UniqueBTName);
+#endif
   FriendlyNameOffset = FriendlyNameOffsetLoad();
   Friendly_Name = FriendlyNameConstruct();
+
+  if (!allocate_data_buffer())
+  {
+    LastError("ADC data buffer allocation failed");
+  }
   
   ez.begin();
-
+  ez.backlight.inactivity(NEVER);
   showSplash();
 
   ez.theme->header_bgcolor = RAL3020_RGB565;   

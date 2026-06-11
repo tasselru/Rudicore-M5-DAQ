@@ -1,4 +1,4 @@
-## Rudicore-M5 ##
+## Rudicore-M5-DAQ ##
 
 <img width="300" height="278" alt="rudicore-m5" align="left" src="/logo/rudicore-m5.png" />
 
@@ -8,6 +8,7 @@ It accepts simple, human-readable queries over UART (via USB or Bluetooth), tran
 
 This makes it easy to interface with M5Stack sensors and actuators from any host system that can **communicate over UART** — for example, from a **Python script**, a **terminal**, or **embedded hardware** including phones or smartwatches.
 
+This fork uses oversampling to reduce ADC noise, increases the buffer size by removing the Bluetooth stack, and adds more configuration options for simultaneously reading digital channels using ESP32ADC.
 ---
 
 ## Tools
@@ -35,7 +36,7 @@ For a full list of supported M5Stack Units and their command strings see <a href
 ## How to install:
 
 - Web based flashing tool:
-  - The easiest way to install Rudicore-M5 on your device is to use the web-based firmware flasher. Click [here](https://rudimesh.github.io/Rudicore-M5/webflasher.html) to flash the firmware directly from your browser.
+  - The easiest way to install Rudicore-M5 on your device is to use the web-based firmware flasher. Click [here](https://tasselru.github.io/Rudicore-M5-DAQ/webflasher.html) to flash the firmware directly from your browser.
 
 - From a binary:
   - Go over to the releases page.

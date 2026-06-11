@@ -38,8 +38,7 @@ static inline void WG_MuteDAC()
 static bool WG_UploadByte(unsigned int sample_size)
 {
   WG_Pointer = sample_size;
-  if (BT_Active) BT.readBytes(WG_buf, sample_size);
-  else Serial.readBytes(WG_buf, sample_size);
+  read_active_input_bytes(WG_buf, sample_size);
   return true;
 }
 
@@ -51,7 +50,7 @@ static bool WG_Play(int rate, int reps)
   int r = 0;
   do
   {
-    if ((Serial.available()) || (BT.available())) return false;
+    if (input_available()) return false;
     for (int n = 0; n < (int)WG_Pointer; n++)
     {
       while (start + ttw > micros());

@@ -2,6 +2,10 @@
 
 Send commands over USB serial or Bluetooth as lines starting with `>`, for example `>SYSTEM.BTName()`.
 
+Build variants:
+- `m5stack-core`: USB serial and Bluetooth, fixed ADC buffer from `ADC_DATA_BUF_SIZE` (default 20000 samples).
+- `m5stack-core-no-bt`: USB serial only, no firmware Bluetooth startup, ADC buffer auto-allocates the largest available heap block while leaving `ADC_DATA_BUF_RESERVE_BYTES` free.
+
 ## System (virtual, prefix `SYSTEM`)
 - `>SYSTEM.Restart()`
 - `>SYSTEM.BTName()`
@@ -24,11 +28,14 @@ Send commands over USB serial or Bluetooth as lines starting with `>`, for examp
 - `>Speaker.Stop()`
 
 ## ESP32 ADC (virtual, prefix `ESP32ADC`)
-- `>ESP32ADC.ConfigureBufferedRead(Port=35|36|Both, SamplingRate=, SampleSize=, TriggerEvent=IGNORE|LOW|HIGH|CHANGE|RISING|FALLING)`
-- `>ESP32ADC.GetValue(Port=35|36|Both)`
-- `>ESP32ADC.GetEnvelope(Duration=1000, Port=35|36|Both)`
+- `>ESP32ADC.Configure([Port=35|36|Both, FirstChannel=35|36|2|5, SecondChannel=35|36|2|5, Attenuation=0dB|2.5dB|6dB|11dB, MarkChannelTwo=true|false, MeasuringInterval=, SamplingRate=, SampleSize=, TriggerEvent=IGNORE|LOW|HIGH|CHANGE|RISING|FALLING, Format=Byte|String])`
+- `>ESP32ADC.ConfigureBufferedRead(...)` compatibility alias for `>ESP32ADC.Configure(...)`
+- `>ESP32ADC.GetConfiguration([BufferSize])`
+- `>ESP32ADC.GetValue([Port=35|36|Both])`
+- `>ESP32ADC.GetEnvelope([Duration=1000, Port=35|36|Both])`
 - `>ESP32ADC.AcquireToBuffer()`
-- `>ESP32ADC.GetBuffer(Format=Byte|String)`
+- `>ESP32ADC.AcquireToBufferMaximumSpeed()`
+- `>ESP32ADC.GetBuffer([Format=Byte|String])` (`String` output ends with `EOF`)
 - `>ESP32ADC.GetAvailableSampleCount()`
 - `>ESP32ADC.GetStream()`
 - `>ESP32ADC.SetAttenuation(Factor=0dB|2.5dB|6dB|11dB)`
